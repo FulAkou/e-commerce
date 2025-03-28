@@ -48,4 +48,56 @@ orderRouter.post(
   })
 );
 
+//order payment route
+orderRouter.put(
+  "/:id/payment",
+  protect,
+  asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id);
+    if (order) {
+      order.isPaid = true;
+      order.paidAt = Date.now();
+      order.paymentResult = {
+        id: req.body.id,
+        status: req.body.status,
+        update_time: req.body.update_time,
+        email_address: req.body.email_address,
+      };
+      const updatedOrder = await order.save();
+      console.log(updatedOrder);
+      res.status(200).json(updatedOrder);
+    } else {
+      res.status(404).json({ message: "Commande non trouvée" });
+    }
+  })
+);
+
+//get all orders
+orderRouter.get(
+  "/",
+  protect,
+  asyncHandler(async (req, res) => {
+    const orders = await Order.find({ user: req.user._id }).sort({ _id: -1 });
+    if (orders) {
+      res.status(200).json(orders);
+    } else {
+      res.status(404).json({ message: "Commandes non trouvées" });
+    }
+  })
+);
+
+//get order by id
+orderRouter.get(
+  "/:id",
+  protect,
+  asyncHandler(async (req, res) => {
+    const order = await Order.findById(req.params.id).populate("user", "email");
+    if (order) {
+      res.status(200).json(order);
+    } else {
+      res.status(404).json({ message: "Commande non trouvée" });
+    }
+  })
+);
+
 module.exports = orderRouter;
